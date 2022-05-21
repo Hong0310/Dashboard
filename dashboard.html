@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Dashboard Introduction</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="http://d3js.org/d3.v2.js"></script>
+    <style type="text/css">
+
+    #pieChart {
+    	position:absolute;
+    	top:100px;
+    	left:500px;
+    	width:400px;
+    	height: 400px;
+    }
+
+
+    #lineChart {
+    	position:absolute;
+    	top:150px;
+    	left:850px;
+    	height: 400px;
+    }
+
+    #barChart {
+    	position:absolute;
+    	top:100px;
+    	left:30px;
+    	height: 450px;
+    }
+
+    #title {
+      position:absolute;
+      top:auto;
+      height:auto;
+      left:450px;
+      font-family: Verdana;
+      font-size: 13px;
+      color:#E4E2E0;
+    }
+
+    #barChart2{
+      position:absolute;
+    	top:530px;
+    	left:200px;
+    	height: 450px;
+    }
+
+    .slice {
+       font-size: 12pt;
+       font-family: Verdana;
+       fill: white;
+       font-weight: bold;
+      		}
+
+    .axis path, .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+
+    .line {
+      fill: none;
+      stroke-width: 3px;
+    }
+
+    .dot {
+      stroke-width: 1.5px;
+      }
+
+
+    .axis text {
+        font-family: Verdana;
+        font-size: 11px;
+
+    }
+
+    .title {
+    	 font-family: Verdana;
+        font-size: 13px;
+        font-weight: bold;
+
+    }
+
+    .xAxis {
+        font-family: verdana;
+        font-size: 11px;
+        fill:#E4E2E0;
+        font-weight: bold;
+    }
+
+    .yAxis {
+        font-family: verdana;
+        font-size: 11px;
+        fill:#E4E2E0;
+    }
+
+
+    table {
+    	border-collapse:collapse;
+    	border: 0px;
+    	font-family: Verdana;
+    	color: #5C5558;
+    	font-size: 12px;
+    	text-align: right;
+    }
+
+    td {
+    	padding-left: 10px;
+    }
+
+    #lineChartTitle1 {
+    	font-family: Verdana;
+    	font-size  : 14px;
+    	fill       : #41A5B3;
+    	font-weight: bold;
+    	text-anchor: middle;
+    }
+
+    #lineChartTitle2 {
+    	font-family: Verdana;
+    	font-size  : 72px;
+    	fill       : #E4E2E0;
+    	text-anchor: middle;
+    	font-weight: bold;
+    }
+
+  </style>
+  </head>
+  <body style="background-color:#0f1C36;">
+
+    <div id="title">
+       <h1 >Dashboard showing COVID-19 cases</h1>
+    </div>
+    <div id="pieChart"></div>
+    <div id="barChart"></div>
+    <div id="lineChart"></div>
+    <div id="barChart2"></div>
+    <script type="text/javascript">
+
+/*
+################ FORMATS ##################
+-------------------------------------------
+*/
+
+
+var 	formatAsPercentage = d3.format("%"),
+		formatAsPercentage1Dec = d3.format(".1%"),
+		formatAsInteger = d3.format(","),
+		fsec = d3.time.format("%S s"),
+		fmin = d3.time.format("%M m"),
+		fhou = d3.time.format("%H h"),
+		fwee = d3.time.format("%a"),
+		fdat = d3.time.format("%d d"),
+		fmon = d3.time.format("%b")
+		;
+
+/*
+############# PIE CHART ###################
+-------------------------------------------
+*/
+
+
+
+function dsPieChart(){
+
+	var dataset = [
+			{category: "US", measure: 0.53},
+	      {category: "India", measure: 0.20},
+	      {category: "Russia", measure: 0.08},
+	      {category: "France", measure: 0.07},
+	      {category: "UK", measure: 0.08},
+	      {category: "Germany", measure:0.05},
+	      {category: "China", measure: 0.0019}
+	      ]
+	      ;
+
+	var  width = 400,
+		   height = 400,
+		   outerRadius = Math.min(width, height) / 2,
+		   innerRadius = outerRadius * .999,
+		   // for animation
+		   innerRadiusFinal = outerRadius * .5,
+		   innerRadiusFinal3 = outerRadius* .45,
+		   color = d3.scale.category10()
+		   ;
+
+	var vis = d3.select("#pieChart")
+	     .append("svg:svg")
+	     .data([dataset])
+	         .attr("width", width)
+	         .attr("height", height)
+	     		.append("svg:g")
+	         .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")")
+				;
+
+   var arc = d3.svg.arc()
+        	.outerRadius(outerRadius).innerRadius(innerRadius);
+
+   // for animation
+   var arcFinal = d3.svg.arc().innerRadius(innerRadiusFinal).outerRadius(outerRadius);
+	var arcFinal3 = d3.svg.arc().innerRadius(innerRadiusFinal3).outerRadius(outerRadius);
+
+   var pie = d3.layout.pie()
+        .value(function(d) { return d.measure; });
+
+   var arcs = vis.selectAll("g.slice")
+        .data(pie)
+        .enter()
+            .append("svg:g")
+               .attr("class", "slice")
+               .on("mouseover", mouseover)
+    				.on("mouseout", mouseout)
+    				.on("click", up)
+    				;
+
+        arcs.append("svg:path")
+               .attr("fill", function(d, i) { return color(i); } )
+               .attr("d", arc)
+					.append("svg:title")
+				   .text(function(d) { return d.data.category + ": " + formatAsPercentage(d.data.measure); });
+
+        d3.selectAll("g.slice").selectAll("path").transition()
+			    .duration(750)
+			    .delay(10)
+			    .attr("d", arcFinal )
+			    ;
+
+	  arcs.filter(function(d) { return d.endAngle - d.startAngle > .2; })
+	  		.append("svg:text")
+	      .attr("dy", ".35em")
+	      .attr("text-anchor", "middle")
+	      .attr("transform", function(d) { return "translate(" + arcFinal.centroid(d) + ")rotate(" + angle(d) + ")"; })
+	      .text(function(d) { return d.data.category; })
+	      ;
+
+		function angle(d) {
+		    var a = (d.startAngle + d.endAngle) * 90 / Math.PI - 90;
+		    return a > 90 ? a - 180 : a;
+		}
+
+
+		// Pie chart title
+		vis.append("svg:text")
+	     	.attr("dy", ".35em")
+	      .attr("text-anchor", "middle")
+	      .text("Share of Confirmed Cases")
+	      .attr("class","title")
+        .attr("fill","#E4E2E0")
+	      ;
+
+
+
+	function mouseover() {
+	  d3.select(this).select("path").transition()
+	      .duration(750)
+	        		.attr("d", arcFinal3)
+	        		;
+	}
+
+	function mouseout() {
+	  d3.select(this).select("path").transition()
+	      .duration(750)
+	        		.attr("d", arcFinal)
+	        		;
+	}
+
+	function up(d, i) {
+
+				updateBarChart(d.data.category, color(i));
+				updateLineChart(d.data.category, color(i));
+        updateBarChart2(d.data.category, color(i));
+
+	}
+}
+
+dsPieChart();
+
+
+
+
+
+/*
+############# BAR CHART ###################
+-------------------------------------------
+*/
+
+
+
+var datasetBarChart = [
+{ group: "All", category: "Confirmed", measure: 54314452 },
+{ group: "All", category: "Deaths", measure: 1036990 },
+{ group: "All", category: "Recovered", measure: 23554251 },
+
+{ group: "US", category: "Confirmed", measure: 28554465 },
+{ group: "US", category: "Deaths", measure: 511994 },
+{ group: "US", category: "Recovered", measure: 6399531 },
+
+{ group: "India", category: "Confirmed", measure: 11096731 },
+{ group: "India", category: "Deaths", measure: 157051 },
+{ group: "India", category: "Recovered", measure: 10775169 },
+
+{ group: "Russia", category: "Confirmed", measure: 4187166 },
+{ group: "Russia", category: "Deaths", measure: 84330 },
+{ group: "Russia", category: "Recovered", measure: 3756808 },
+
+{ group: "France", category: "Confirmed", measure: 3747263 },
+{ group: "France", category: "Deaths", measure: 85741 },
+{ group: "France", category: "Recovered", measure: 261649 },
+
+{ group: "UK", category: "Confirmed", measure: 4182772 },
+{ group: "UK", category: "Deaths", measure: 122939 },
+{ group: "UK", category: "Recovered", measure: 11602 },
+
+{ group: "Germany", category: "Confirmed", measure: 2444177 },
+{ group: "Germany", category: "Deaths", measure: 70092 },
+{ group: "Germany", category: "Recovered", measure: 2252970 },
+
+{ group: "China", category: "Confirmed", measure: 101878 },
+{ group: "China", category: "Deaths", measure: 4843 },
+{ group: "China", category: "Recovered", measure: 96522 },
+]
+;
+
+// set initial group value
+var group = "All";
+
+function datasetBarChosen(group) {
+	var ds = [];
+	for (x in datasetBarChart) {
+		 if(datasetBarChart[x].group==group){
+		 	ds.push(datasetBarChart[x]);
+		 }
+		}
+	return ds;
+}
+
+
+function dsBarChartBasics() {
+
+		var margin = {top: 30, right: 5, bottom: 30, left: 50},
+		    width = 400 - margin.left - margin.right,
+	      height = 400 - margin.top - margin.bottom,
+		    colorBar = d3.scale.category20(),
+		    barPadding = 3
+		;
+
+		return {
+			margin : margin,
+			width : width,
+			height : height,
+			colorBar : colorBar,
+			barPadding : barPadding
+		}
+		;
+}
+
+function dsBarChart() {
+
+	var firstDatasetBarChart = datasetBarChosen(group);
+
+	var basics = dsBarChartBasics();
+
+	var margin = basics.margin,
+		  width = basics.width,
+	    height = basics.height,
+		  colorBar = basics.colorBar,
+		  barPadding = basics.barPadding
+		;
+
+	var xScale = d3.scale.linear()
+						.domain([0, firstDatasetBarChart.length])
+						.range([0, width])
+						;
+
+	var yScale = d3.scale.linear()
+		   .domain([0, d3.max(firstDatasetBarChart, function(d) { return d.measure; })])
+		   .range([height,0])
+		   ;
+
+	//Create SVG element
+
+	var svg = d3.select("#barChart")
+			.append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		    .attr("id","barChartPlot")
+		    ;
+
+	var plot = svg
+		    .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+		    ;
+
+	plot.selectAll("rect")
+		   .data(firstDatasetBarChart)
+		   .enter()
+		   .append("rect")
+			.attr("x", function(d, i) {
+			    return xScale(i);
+			})
+		   .attr("width", width / firstDatasetBarChart.length - barPadding)
+			.attr("y", function(d) {
+			    return yScale(d.measure);
+			})
+			.attr("height", function(d) {
+			    return height-yScale(d.measure);
+			})
+			.attr("fill", "#41A5B3")
+			;
+
+  // Add y labels to chart
+
+	plot.selectAll("text")
+	.data(firstDatasetBarChart)
+	.enter()
+	.append("text")
+	.text(function(d) {
+			return formatAsInteger(d3.round(d.measure));
+	})
+	.attr("text-anchor", "middle")
+	.attr("x", function(d, i) {
+			return (i * (width / firstDatasetBarChart.length)) + ((width / firstDatasetBarChart.length - barPadding) / 2);
+	})
+	.attr("y", function(d) {
+			return yScale(d.measure) + 10;
+	})
+	.attr("class", "yAxis")
+
+	// Add x labels to chart
+
+	var xLabels = svg
+		    .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + (margin.top + height)  + ")")
+		    ;
+
+	xLabels.selectAll("text.xAxis")
+		  .data(firstDatasetBarChart)
+		  .enter()
+		  .append("text")
+		  .text(function(d) { return d.category;})
+		  .attr("text-anchor", "middle")
+						   .attr("x", function(d, i) {
+						   		return (i * (width / firstDatasetBarChart.length)) + ((width / firstDatasetBarChart.length - barPadding) / 2);
+						   })
+		  .attr("y", 25)
+		  .attr("class", "xAxis")
+		  ;
+
+	// Title
+
+	svg.append("text")
+		.attr("x", (width + margin.left + margin.right)/2)
+		.attr("y", 15)
+		.attr("class","title")
+		.attr("text-anchor", "middle")
+    .attr("fill","#E4E2E0")
+		.text("Overall Situation From Mar 2020 ~ Feb 2021")
+		;
+}
+
+dsBarChart();
+
+ /* ** UPDATE CHART ** */
+
+/* updates bar chart on request */
+
+function updateBarChart(group, colorChosen) {
+
+		var currentDatasetBarChart = datasetBarChosen(group);
+
+		var basics = dsBarChartBasics();
+
+		var margin = basics.margin,
+			  width = basics.width,
+		    height = basics.height,
+			  colorBar = basics.colorBar,
+		  	barPadding = basics.barPadding
+			;
+
+		var xScale = d3.scale.linear()
+			.domain([0, currentDatasetBarChart.length])
+			.range([0, width])
+			;
+
+
+		var yScale = d3.scale.linear()
+	      .domain([0, d3.max(currentDatasetBarChart, function(d) { return d.measure; })])
+	      .range([height,0])
+	      ;
+
+	  var svg = d3.select("#barChart svg");
+
+	  var plot = d3.select("#barChartPlot")
+	   	.datum(currentDatasetBarChart)
+		   ;
+
+	  	plot.selectAll("rect")
+	      .data(currentDatasetBarChart)
+	      .transition()
+			.duration(750)
+			.attr("x", function(d, i) {
+			    return xScale(i);
+			})
+		   .attr("width", width / currentDatasetBarChart.length - barPadding)
+			.attr("y", function(d) {
+			    return yScale(d.measure);
+			})
+			.attr("height", function(d) {
+			    return height-yScale(d.measure);
+			})
+			.attr("fill", colorChosen)
+			;
+
+		plot.selectAll("text.yAxis")
+			.data(currentDatasetBarChart)
+			.transition()
+			.duration(750)
+		   .attr("text-anchor", "middle")
+		   .attr("x", function(d, i) {
+		   		return (i * (width / currentDatasetBarChart.length)) + ((width / currentDatasetBarChart.length - barPadding) / 2);
+		   })
+		   .attr("y", function(d) {
+		   		return yScale(d.measure) + 14;
+		   })
+		   .text(function(d) {
+				return formatAsInteger(d3.round(d.measure));
+		   })
+		   .attr("class", "yAxis")
+		;
+
+
+		svg.selectAll("text.title") // target the text element(s) which has a title class defined
+			.attr("x", (width + margin.left + margin.right)/2)
+			.attr("y", 15)
+			.attr("class","title")
+			.attr("text-anchor", "middle")
+			.text(group + "'s Situation From Mar 2020 ~ Feb 2021")
+		;
+}
+
+/*
+############# BAR CHART2 ###################
+-------------------------------------------
+*/
+
+
+var datasetBarChart2 = [
+{ group: "All", category: "Mar", measure: 0.03141033 },
+{ group: "All", category: "Apr", measure: 0.071232664 },
+{ group: "All", category: "May", measure: 0.063017415 },
+{ group: "All", category: "Jun", measure: 0.051997669 },
+{ group: "All", category: "Jul", measure: 0.037451728 },
+{ group: "All", category: "Aug", measure: 0.030286188 },
+{ group: "All", category: "Sep", measure: 0.025770113 },
+{ group: "All", category: "Oct", measure: 0.021933473 },
+{ group: "All", category: "Nov", measure: 0.019139025 },
+{ group: "All", category: "Dec", measure: 0.018163864 },
+{ group: "All", category: "Jan", measure: 0.018323911 },
+{ group: "All", category: "Feb", measure: 0.01909234 },
+
+{ group: "US", category: "Mar", measure: 0.020528933 },
+{ group: "US", category: "Apr", measure: 0.059062909 },
+{ group: "US", category: "May", measure: 0.058772281 },
+{ group: "US", category: "Jun", measure: 0.048573537 },
+{ group: "US", category: "Jul", measure: 0.033848671 },
+{ group: "US", category: "Aug", measure: 0.030581118 },
+{ group: "US", category: "Sep", measure: 0.028652513 },
+{ group: "US", category: "Oct", measure: 0.025402134 },
+{ group: "US", category: "Nov", measure: 0.02002956 },
+{ group: "US", category: "Dec", measure: 0.017616958 },
+{ group: "US", category: "Jan", measure: 0.017116201 },
+{ group: "US", category: "Feb", measure: 0.017930436 },
+
+{ group: "India", category: "Mar", measure: 0.025053686 },
+{ group: "India", category: "Apr", measure: 0.032635654 },
+{ group: "India", category: "May", measure: 0.028516117 },
+{ group: "India", category: "Jun", measure: 0.029802061 },
+{ group: "India", category: "Jul", measure: 0.021849266 },
+{ group: "India", category: "Aug", measure: 0.017802993 },
+{ group: "India", category: "Sep", measure: 0.015660249 },
+{ group: "India", category: "Oct", measure: 0.014948903 },
+{ group: "India", category: "Nov", measure: 0.014540235 },
+{ group: "India", category: "Dec", measure: 0.014487457 },
+{ group: "India", category: "Jan", measure: 0.014356179 },
+{ group: "India", category: "Feb", measure: 0.014152907 },
+
+{ group: "Russia", category: "Mar", measure: 0.007274283 },
+{ group: "Russia", category: "Apr", measure: 0.00977877 },
+{ group: "Russia", category: "May", measure: 0.011485848 },
+{ group: "Russia", category: "Jun", measure: 0.014294506 },
+{ group: "Russia", category: "Jul", measure: 0.016540355 },
+{ group: "Russia", category: "Aug", measure: 0.017261284 },
+{ group: "Russia", category: "Sep", measure: 0.017597649 },
+{ group: "Russia", category: "Oct", measure: 0.017288737 },
+{ group: "Russia", category: "Nov", measure: 0.017390628 },
+{ group: "Russia", category: "Dec", measure: 0.017965057 },
+{ group: "Russia", category: "Jan", measure: 0.018878891 },
+{ group: "Russia", category: "Feb", measure: 0.020140114 },
+
+{ group: "UK", category: "Mar", measure: 0.070366155 },
+{ group: "UK", category: "Apr", measure: 0.157208861 },
+{ group: "UK", category: "May", measure: 0.14024557 },
+{ group: "UK", category: "Jun", measure: 0.139276486 },
+{ group: "UK", category: "Jul", measure: 0.151636998 },
+{ group: "UK", category: "Aug", measure: 0.123522283 },
+{ group: "UK", category: "Sep", measure: 0.093958296 },
+{ group: "UK", category: "Oct", measure: 0.046651344 },
+{ group: "UK", category: "Nov", measure: 0.035984526 },
+{ group: "UK", category: "Dec", measure: 0.029774945 },
+{ group: "UK", category: "Jan", measure: 0.027784892 },
+{ group: "UK", category: "Feb", measure: 0.029391753 },
+
+{ group: "France", category: "Mar", measure: 0.06744711 },
+{ group: "France", category: "Apr", measure: 0.143704181 },
+{ group: "France", category: "May", measure: 0.150851403 },
+{ group: "France", category: "Jun", measure: 0.146298141 },
+{ group: "France", category: "Jul", measure: 0.133921418 },
+{ group: "France", category: "Aug", measure: 0.096259358 },
+{ group: "France", category: "Sep", measure: 0.053924842 },
+{ group: "France", category: "Oct", measure: 0.026538939 },
+{ group: "France", category: "Nov", measure: 0.023062503 },
+{ group: "France", category: "Dec", measure: 0.024272809 },
+{ group: "France", category: "Jan", measure: 0.023482668 },
+{ group: "France", category: "Feb", measure: 0.022880967 },
+
+{ group: "Germany", category: "Mar", measure: 0.010792669 },
+{ group: "Germany", category: "Apr", measure: 0.040033676 },
+{ group: "Germany", category: "May", measure: 0.046563931 },
+{ group: "Germany", category: "Jun", measure: 0.046020857 },
+{ group: "Germany", category: "Jul", measure: 0.043639487 },
+{ group: "Germany", category: "Aug", measure: 0.038223629 },
+{ group: "Germany", category: "Sep", measure: 0.032646977 },
+{ group: "Germany", category: "Oct", measure: 0.020070074 },
+{ group: "Germany", category: "Nov", measure: 0.015445808 },
+{ group: "Germany", category: "Dec", measure: 0.019085055 },
+{ group: "Germany", category: "Jan", measure: 0.025666195 },
+{ group: "Germany", category: "Feb", measure: 0.028677138 },
+
+{ group: "China", category: "Mar", measure: 0.04012058 },
+{ group: "China", category: "Apr", measure: 0.055029453 },
+{ group: "China", category: "May", measure: 0.054924914 },
+{ group: "China", category: "Jun", measure: 0.054536708 },
+{ group: "China", category: "Jul", measure: 0.053049252 },
+{ group: "China", category: "Aug", measure: 0.052321786 },
+{ group: "China", category: "Sep", measure: 0.052130359 },
+{ group: "China", category: "Oct", measure: 0.051647024 },
+{ group: "China", category: "Nov", measure: 0.050821163 },
+{ group: "China", category: "Dec", measure: 0.04952779 },
+{ group: "China", category: "Jan", measure: 0.0478107 },
+{ group: "China", category: "Feb", measure: 0.023554251 },
+]
+;
+
+// set initial group value
+var group = "All";
+
+function datasetBarChosen2(group) {
+	var ds = [];
+	for (x in datasetBarChart2) {
+		 if(datasetBarChart2[x].group==group){
+		 	ds.push(datasetBarChart2[x]);
+		 }
+		}
+	return ds;
+}
+
+
+function dsBarChartBasics2() {
+
+		var margin = {top: 40, right: 5, bottom: 30, left: 50},
+		    width = 1000 - margin.left - margin.right,
+	      height = 230 - margin.top - margin.bottom,
+		    colorBar = d3.scale.category20(),
+		    barPadding = 3
+		;
+
+		return {
+			margin : margin,
+			width : width,
+			height : height,
+			colorBar : colorBar,
+			barPadding : barPadding
+		}
+		;
+}
+
+function dsBarChart2() {
+
+	var firstDatasetBarChart2 = datasetBarChosen2(group);
+
+	var basics2 = dsBarChartBasics2();
+
+	var margin = basics2.margin,
+		  width = basics2.width,
+	    height = basics2.height,
+		  colorBar = basics2.colorBar,
+		  barPadding = basics2.barPadding
+		;
+
+	var xScale = d3.scale.linear()
+						.domain([0, firstDatasetBarChart2.length])
+						.range([0, width])
+						;
+
+	var yScale = d3.scale.linear()
+		   .domain([0, d3.max(firstDatasetBarChart2, function(d) { return d.measure; })])
+		   .range([height,0])
+		   ;
+
+	//Create SVG element
+
+	var svg = d3.select("#barChart2")
+			.append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		    .attr("id","barChartPlot2")
+		    ;
+
+	var plot = svg
+		    .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+		    ;
+
+	plot.selectAll("rect")
+		   .data(firstDatasetBarChart2)
+		   .enter()
+		   .append("rect")
+			.attr("x", function(d, i) {
+			    return xScale(i);
+			})
+		   .attr("width", width / firstDatasetBarChart2.length - barPadding)
+			.attr("y", function(d) {
+			    return yScale(d.measure);
+			})
+			.attr("height", function(d) {
+			    return height-yScale(d.measure);
+			})
+			.attr("fill", "#41A5B3")
+			;
+
+  // Add y labels to chart
+
+	plot.selectAll("text")
+	.data(firstDatasetBarChart2)
+	.enter()
+	.append("text")
+	.text(function(d) {
+			return formatAsPercentage(d.measure);
+	})
+	.attr("text-anchor", "middle")
+	.attr("x", function(d, i) {
+			return (i * (width / firstDatasetBarChart2.length)) + ((width / firstDatasetBarChart2.length - barPadding) / 2);
+	})
+	.attr("y", function(d) {
+			return yScale(d.measure) + 10;
+	})
+	.attr("class", "yAxis")
+
+	// Add x labels to chart
+
+	var xLabels = svg
+		    .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + (margin.top + height)  + ")")
+		    ;
+
+	xLabels.selectAll("text.xAxis")
+		  .data(firstDatasetBarChart2)
+		  .enter()
+		  .append("text")
+		  .text(function(d) { return d.category;})
+		  .attr("text-anchor", "middle")
+						   .attr("x", function(d, i) {
+						   		return (i * (width / firstDatasetBarChart2.length)) + ((width / firstDatasetBarChart2.length - barPadding) / 2);
+						   })
+		  .attr("y", 25)
+		  .attr("class", "xAxis")
+		  ;
+
+	// Title
+
+	svg.append("text")
+		.attr("x", (width + margin.left + margin.right)/2)
+		.attr("y", 15)
+		.attr("class","title")
+		.attr("text-anchor", "middle")
+    .attr("fill","#E4E2E0")
+		.text("Overall Monthly Ratio of Deaths/Confirmed")
+		;
+}
+
+dsBarChart2();
+
+ /* ** UPDATE CHART ** */
+
+/* updates bar chart on request */
+
+function updateBarChart2(group, colorChosen) {
+
+		var currentDatasetBarChart2 = datasetBarChosen2(group);
+
+		var basics3 = dsBarChartBasics2();
+
+		var margin = basics3.margin,
+			  width = basics3.width,
+		    height = basics3.height,
+			  colorBar = basics3.colorBar,
+		  	barPadding = basics3.barPadding
+			;
+
+		var xScale = d3.scale.linear()
+			.domain([0, currentDatasetBarChart2.length])
+			.range([0, width])
+			;
+
+
+		var yScale = d3.scale.linear()
+	      .domain([0, d3.max(currentDatasetBarChart2, function(d) { return d.measure; })])
+	      .range([height,0])
+	      ;
+
+	  var svg = d3.select("#barChart2 svg");
+
+	  var plot = d3.select("#barChartPlot2")
+	   	.datum(currentDatasetBarChart2)
+		   ;
+
+	  	plot.selectAll("rect")
+	      .data(currentDatasetBarChart2)
+	      .transition()
+			.duration(750)
+			.attr("x", function(d, i) {
+			    return xScale(i);
+			})
+		   .attr("width", width / currentDatasetBarChart2.length - barPadding)
+			.attr("y", function(d) {
+			    return yScale(d.measure);
+			})
+			.attr("height", function(d) {
+			    return height-yScale(d.measure);
+			})
+			.attr("fill", colorChosen)
+			;
+
+		plot.selectAll("text.yAxis")
+			.data(currentDatasetBarChart2)
+			.transition()
+			.duration(750)
+		   .attr("text-anchor", "middle")
+		   .attr("x", function(d, i) {
+		   		return (i * (width / currentDatasetBarChart2.length)) + ((width / currentDatasetBarChart2.length - barPadding) / 2);
+		   })
+		   .attr("y", function(d) {
+		   		return yScale(d.measure) + 14;
+		   })
+		   .text(function(d) {
+				return formatAsPercentage(d.measure);
+		   })
+		   .attr("class", "yAxis")
+		;
+
+
+		svg.selectAll("text.title") // target the text element(s) which has a title class defined
+			.attr("x", (width + margin.left + margin.right)/2)
+			.attr("y", 15)
+			.attr("class","title")
+			.attr("text-anchor", "middle")
+			.text(group + "'s Monthly Ratio of Deaths/Confirmed")
+		;
+}
+
+/*
+############# LINE CHART ##################
+-------------------------------------------
+*/
+
+var datasetLineChart = [
+  { group: "All", category: "Mar", measure: 424319 },
+  { group: "All", category: "Apr", measure: 1753381 },
+  { group: "All", category: "May", measure: 3083354 },
+  { group: "All", category: "Jun", measure: 4606168 },
+  { group: "All", category: "Jul", measure: 7802604 },
+  { group: "All", category: "Aug", measure: 11603177 },
+  { group: "All", category: "Sep", measure: 16023290 },
+  { group: "All", category: "Oct", measure: 21803752 },
+  { group: "All", category: "Nov", measure: 30219669 },
+  { group: "All", category: "Dec", measure: 40130118 },
+  { group: "All", category: "Jan", measure: 49981087 },
+  { group: "All", category: "Feb", measure: 54314452 },
+
+  { group: "US", category: "Mar", measure: 188417 },
+  { group: "US", category: "Apr", measure: 1040924 },
+  { group: "US", category: "May", measure: 1772230 },
+  { group: "US", category: "Jun", measure: 2601540 },
+  { group: "US", category: "Jul", measure: 4507533 },
+  { group: "US", category: "Aug", measure: 6006059 },
+  { group: "US", category: "Sep", measure: 7213329 },
+  { group: "US", category: "Oct", measure: 9096401 },
+  { group: "US", category: "Nov", measure: 13495104 },
+  { group: "US", category: "Dec", measure: 19827770 },
+  { group: "US", category: "Jan", measure: 26075178 },
+  { group: "US", category: "Feb", measure: 28554465 },
+
+  { group: "India", category: "Mar", measure: 1397 },
+  { group: "India", category: "Apr", measure: 33062 },
+  { group: "India", category: "May", measure: 181827 },
+  { group: "India", category: "Jun", measure: 566840 },
+  { group: "India", category: "Jul", measure: 1634746 },
+  { group: "India", category: "Aug", measure: 3621245 },
+  { group: "India", category: "Sep", measure: 6225763 },
+  { group: "India", category: "Oct", measure: 8137119 },
+  { group: "India", category: "Nov", measure: 9431691 },
+  { group: "India", category: "Dec", measure: 10266674 },
+  { group: "India", category: "Jan", measure: 10746174 },
+  { group: "India", category: "Feb", measure: 11096731 },
+
+  { group: "Russia", category: "Mar", measure: 2337 },
+  { group: "Russia", category: "Apr", measure: 99399 },
+  { group: "Russia", category: "May", measure: 396575 },
+  { group: "Russia", category: "Jun", measure: 640246 },
+  { group: "Russia", category: "Jul", measure: 832993 },
+  { group: "Russia", category: "Aug", measure: 987470 },
+  { group: "Russia", category: "Sep", measure: 1162428 },
+  { group: "Russia", category: "Oct", measure: 1588433 },
+  { group: "Russia", category: "Nov", measure: 2249890 },
+  { group: "Russia", category: "Dec", measure: 3100018 },
+  { group: "Russia", category: "Jan", measure: 3790265 },
+  { group: "Russia", category: "Feb", measure: 4187166 },
+
+  { group: "UK", category: "Mar", measure: 25481 },
+  { group: "UK", category: "Apr", measure: 166441 },
+  { group: "UK", category: "May", measure: 274219 },
+  { group: "UK", category: "Jun", measure: 313470 },
+  { group: "UK", category: "Jul", measure: 303910 },
+  { group: "UK", category: "Aug", measure: 336668 },
+  { group: "UK", category: "Sep", measure: 448731 },
+  { group: "UK", category: "Oct", measure: 992876 },
+  { group: "UK", category: "Nov", measure: 1621308 },
+  { group: "UK", category: "Dec", measure: 2440206 },
+  { group: "UK", category: "Jan", measure: 3806997 },
+  { group: "UK", category: "Feb", measure: 4182772 },
+
+  { group: "France", category: "Mar", measure: 52278 },
+  { group: "France", category: "Apr", measure: 167643 },
+  { group: "France", category: "May", measure: 190744 },
+  { group: "France", category: "Jun", measure: 203803 },
+  { group: "France", category: "Jul", measure: 225931 },
+  { group: "France", category: "Aug", measure: 318047 },
+  { group: "France", category: "Sep", measure: 591527 },
+  { group: "France", category: "Oct", measure: 1379294 },
+  { group: "France", category: "Nov", measure: 2272520 },
+  { group: "France", category: "Dec", measure: 2657624 },
+  { group: "France", category: "Jan", measure: 3236685 },
+  { group: "France", category: "Feb", measure: 3747263 },
+
+  { group: "Germany", category: "Mar", measure: 71808 },
+  { group: "Germany", category: "Apr", measure: 161539 },
+  { group: "Germany", category: "May", measure: 183189 },
+  { group: "Germany", category: "Jun", measure: 195042 },
+  { group: "Germany", category: "Jul", measure: 209535 },
+  { group: "Germany", category: "Aug", measure: 243305 },
+  { group: "Germany", category: "Sep", measure: 290471 },
+  { group: "Germany", category: "Oct", measure: 517736 },
+  { group: "Germany", category: "Nov", measure: 1055691 },
+  { group: "Germany", category: "Dec", measure: 1741153 },
+  { group: "Germany", category: "Jan", measure: 2224911 },
+  { group: "Germany", category: "Feb", measure: 2444177 },
+
+  { group: "China", category: "Mar", measure: 82601 },
+  { group: "China", category: "Apr", measure: 84373 },
+  { group: "China", category: "May", measure: 84570 },
+  { group: "China", category: "Jun", measure: 85227 },
+  { group: "China", category: "Jul", measure: 87956 },
+  { group: "China", category: "Aug", measure: 90383 },
+  { group: "China", category: "Sep", measure: 91041 },
+  { group: "China", category: "Oct", measure: 91893 },
+  { group: "China", category: "Nov", measure: 93465 },
+  { group: "China", category: "Dec", measure: 96673 },
+  { group: "China", category: "Jan", measure: 100877 },
+  { group: "China", category: "Feb", measure: 101878 },
+  ]
+;
+
+// set initial category value
+var group = "All";
+
+function datasetLineChartChosen(group) {
+	var ds = [];
+	for (x in datasetLineChart) {
+		 if(datasetLineChart[x].group==group){
+		 	ds.push(datasetLineChart[x]);
+		 }
+		}
+	return ds;
+}
+
+function dsLineChartBasics() {
+
+	var margin = {top: 20, right: 10, bottom: 20, left: 100},
+	    width = 550 - margin.left - margin.right,
+	    height = 400 - margin.top - margin.bottom
+	    ;
+
+		return {
+			margin : margin,
+			width : width,
+			height : height
+		}
+		;
+}
+
+
+function dsLineChart() {
+
+	var firstDatasetLineChart = datasetLineChartChosen(group);
+
+	var basics = dsLineChartBasics();
+
+	var margin = basics.margin,
+		width = basics.width,
+	   height = basics.height
+		;
+
+	var xScale = d3.scale.linear()
+	    .domain([0, firstDatasetLineChart.length-1])
+	    .range([0, width])
+	    ;
+
+	var yScale = d3.scale.linear()
+	    .domain([0, d3.max(firstDatasetLineChart, function(d) { return d.measure; })])
+	    .range([height, 0])
+	    ;
+
+	var line = d3.svg.line()
+	    .x(function(d, i) { return xScale(i); })
+	    .y(function(d) { return yScale(d.measure); })
+	    ;
+
+	var svg = d3.select("#lineChart").append("svg")
+	    .datum(firstDatasetLineChart)
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+
+	var plot = svg
+	    .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+	    .attr("id", "lineChartPlot")
+	    ;
+
+		/* descriptive titles as part of plot -- start */
+	var dsLength=firstDatasetLineChart.length;
+
+	plot.append("text")
+		.text(firstDatasetLineChart[dsLength-1].measure)
+		.attr("id","lineChartTitle2")
+		.attr("x",width/2)
+		.attr("y",height/2)
+		;
+	/* descriptive titles -- end */
+
+	plot.append("path")
+	    .attr("class", "line")
+	    .attr("d", line)
+		.attr("stroke", "#41A5B3")
+	    ;
+
+	plot.selectAll(".dot")
+	    .data(firstDatasetLineChart)
+	  	 .enter().append("circle")
+	    .attr("class", "dot")
+	    .attr("cx", line.x())
+	    .attr("cy", line.y())
+	    .attr("r", 3.5)
+	    .attr("stroke", "lightgrey")
+	    .append("title")
+	    .text(function(d) { return d.category + ": " + formatAsInteger(d.measure); })
+	    ;
+
+	svg.append("text")
+		.text("Number of Confirmed Cases")
+		.attr("id","lineChartTitle1")
+		.attr("x",margin.left + ((width + margin.right)/2))
+		.attr("y", 20)
+		;
+
+}
+
+dsLineChart();
+
+
+ /* ** UPDATE CHART ** */
+
+/* updates bar chart on request */
+function updateLineChart(group, colorChosen) {
+
+	var currentDatasetLineChart = datasetLineChartChosen(group);
+
+	var basics = dsLineChartBasics();
+
+	var margin = basics.margin,
+		width = basics.width,
+	   height = basics.height
+		;
+
+	var xScale = d3.scale.linear()
+	    .domain([0, currentDatasetLineChart.length-1])
+	    .range([0, width])
+	    ;
+
+	var yScale = d3.scale.linear()
+	    .domain([0, d3.max(currentDatasetLineChart, function(d) { return d.measure; })])
+	    .range([height, 0])
+	    ;
+
+	var line = d3.svg.line()
+    .x(function(d, i) { return xScale(i); })
+    .y(function(d) { return yScale(d.measure); })
+    ;
+
+   var plot = d3.select("#lineChartPlot")
+   	.datum(currentDatasetLineChart)
+	   ;
+
+	/* descriptive titles as part of plot -- start */
+	var dsLength=currentDatasetLineChart.length;
+
+	plot.select("text")
+		.text(currentDatasetLineChart[dsLength-1].measure)
+		;
+	/* descriptive titles -- end */
+
+	plot
+	.select("path")
+		.transition()
+		.duration(750)
+	   .attr("class", "line")
+	   .attr("d", line)
+	   // add color
+		.attr("stroke", colorChosen)
+	   ;
+
+	var path = plot
+		.selectAll(".dot")
+	   .data(currentDatasetLineChart)
+	   .transition()
+		.duration(750)
+	   .attr("class", "dot")
+	   .attr("cx", line.x())
+	   .attr("cy", line.y())
+	   .attr("r", 3.5)
+		.attr("stroke", colorChosen)
+	   ;
+
+	   path
+	   .selectAll("title")
+	   .text(function(d) { return d.category + ": " + formatAsInteger(d.measure); })
+	   ;
+
+}
+
+    </script>
+  </body>
+</html>
